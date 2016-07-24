@@ -47,4 +47,22 @@ object Main extends App {
     artistByID.persist()
     println(artistByID.count())
     artistByID.take(10).foreach(println)
+
+    val rawArtistAlias = sc.textFile(s"file://$userDir/data/artist_alias.txt", minPartitions)
+    var artistAlias = rawArtistAlias.flatMap { line =>
+        val tokens = line.split("\t")
+        if (tokens(0).isEmpty) {
+            None
+        } else {
+            Some((tokens(0).toInt, tokens(1).toInt))
+        }
+    }
+
+    artistAlias.persist()
+
+    val a1 = artistByID.lookup(1092764)
+    val a2 = artistByID.lookup(1000311)
+    println(a1)
+    println(a2)
+
 }
