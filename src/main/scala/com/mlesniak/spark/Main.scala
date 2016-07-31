@@ -1,6 +1,6 @@
 package com.mlesniak.spark
 
-import org.apache.spark.mllib.recommendation.{ALS, Rating}
+import org.apache.spark.mllib.recommendation.{ALS, MatrixFactorizationModel, Rating}
 import org.apache.spark.{SparkConf, SparkContext}
 
 
@@ -10,8 +10,8 @@ import org.apache.spark.{SparkConf, SparkContext}
   * @author Michael Lesniak (mail@mlesniak.com)
   */
 object Main extends App {
-    // We use 64 partitions to have sufficient parallelization on local systems.
-    val minPartitions: Int = 64
+    // We use 8 partitions to have sufficient parallelization on local systems.
+    val minPartitions: Int = 8
 
     val conf = new SparkConf()
         .setAppName("Music playground")
@@ -67,8 +67,8 @@ object Main extends App {
     println(a1)
     println(a2)
 
-    // Opimize broadcasting for multiple nodes.
-    // val bArtistAlias = sc.broadcast(artistAlias)
+    // Optimize broadcasting for multiple nodes.
+    // val bArtistAlias = sc.broadcast(ArtistArray)
 
     val trainData = rawUserArtist.map { line =>
         val Array(userID, artistID, count) = line.split(" ").map(_.toInt)
@@ -82,4 +82,10 @@ object Main extends App {
     }.cache()
 
     val model = ALS.trainImplicit(trainData, 10, 5, 0.01, 1.0)
+
+    println("Saving model")
+    model.save(sc, "music-model")
+    println("Loading model")
+
+    val loadedModel: MatrixFactorizationModel = MatrixFactorizationModel.load(sc, "music-model")
 }
