@@ -1,6 +1,8 @@
 package com.mlesniak.spark
 
+import org.apache.spark.mllib.recommendation.Rating
 import org.apache.spark.{SparkConf, SparkContext}
+
 
 /**
   * Application entry point.
@@ -65,4 +67,17 @@ object Main extends App {
     println(a1)
     println(a2)
 
+    // Opimize broadcasting for multiple nodes.
+    val bArtistAlias = sc.broadcast(artistAlias)
+
+    val trainData = rawUserArtist.map { line =>
+        val Array(userID, artistID, count) = line.split(" ").map(_.toInt)
+        val id = bArtistAlias.value.lookup(artistID)
+        val finalID: Int = if (id.isEmpty) {
+            artistID
+        } else {
+            id.head
+        }
+        Rating(userID, finalID, count)
+    }.cache()
 }
